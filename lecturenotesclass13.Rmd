@@ -4,7 +4,7 @@ author: ""
 date: "March 3, 2021"
 output: html_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r global_options, include=FALSE}
@@ -54,7 +54,7 @@ p2 <- ggplot(pop, aes(x = x, y = y, alpha = factor(s))) +
   labs(title = "Sample", x = "", y = "") +
   theme_void() +
   theme(legend.position = "none")
-(p1 | p_arrow | p2) 
+#(p1 | p_arrow | p2) 
 ```
 
 
@@ -189,7 +189,7 @@ Consider 20 1-bedroom apartments that were randomly selected on
 Craigslist Manhattan from apartments listed as "by owner".
 
 ```{r data_manhattan}
-manhattan <- read_csv("~/manhattan.csv")
+manhattan <- read_csv("./manhattan.csv")
 ```
 
 Consider 3-10 day survival of mice randomized to various
@@ -339,7 +339,11 @@ population *median* price of 1-bedroom apartments in Manhattan. Do this in a
 single code chunk with a single pipeline. Provide an interpretation of your result.
 
 ```{r practice_1}
-
+manhattan %>%
+  specify(response=rent) %>%
+  generate(reps=10000, type="bootstrap") %>%
+  calculate(stat="median") %>%
+  get_ci(level=0.95)
 ```
 
 ### A confidence interval for the population proportion - $p$
@@ -369,6 +373,8 @@ ci_mice_died
 
 What does this mean?
 
+Upper and lower bounds of the percent of mice who died on treatment.
+
 **Interpretation**:
 
 ```{r visualize_ci_mice}
@@ -381,22 +387,30 @@ visualise(boot_prop) +
 Consider the mice radiation results. Suppose we want to compute a 90% confidence interval for the proportion of mice that lived while on the treatment, regardless of the dose.
 
 ```{r practice_2_bootstrap}
-
+boot_prop_live <- mice %>% 
+  filter(treat == 1) %>% 
+  mutate(died = if_else(died == 0, "no", "yes")) %>% 
+  specify(response = died, success = "no") %>% 
+  generate(reps = 10000, type = "bootstrap") %>% 
+  calculate(stat = "prop")
 ```
 
 ```{r practice_2_ci}
-
+ci_mice_live <- get_ci(boot_prop_live, level=0.9)
+ci_mice_live
 ```
 
 Visualizing our Resuts:
 
 ```{r practice_2_visualize}
-
+visualise(boot_prop_live) +
+  shade_ci(ci_mice_live)
 ```
 
 
 Give an interpretation of your result.
 
+We are about 90% confident that the proportion of mice who lived on the treatment is on the interval from 55.2% to 65.1%
 
 # References
 
